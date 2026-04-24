@@ -1,0 +1,79 @@
+import type { GistConfig } from "@/types";
+
+const GIST_FILENAME = ".repopulse-config.json";
+const GITHUB_API = "https://api.github.com";
+
+function authHeaders(token: string) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json",
+  };
+}
+
+export async function readGistConfig(
+  token: string,
+  gistId: string
+): Promise<GistConfig> {
+  const res = await fetch(`${GITHUB_API}/gists/${gistId}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to read Gist: ${res.status} ${res.statusText}`);
+  }
+
+  const gist = await res.json();
+  const file = gist.files?.[GIST_FILENAME];
+
+  if (!file?.content) {
+    throw new Error(`Gist does not contain ${GIST_FILENAME}`);
+  }
+
+  return JSON.parse(file.content) as GistConfig;
+}
+
+export async function writeGistConfig(
+  token: string,
+  gistId: string | null,
+  config: GistConfig
+): Promise<string> {
+  const body = {
+    description: "RepoPulse configuration",
+    public: false,
+    files: {
+      [GIST_FILENAME]: {
+        content: JSON.stringify(config, null, 2),
+      },
+    },
+  };
+
+  if (gistId) {
+    // Update existing Gist
+    const res = await fetch(`${GITHUB_API}/gists/${gistId}`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to update Gist: ${res.status} ${res.statusText}`);
+    }
+
+    return gistId;
+  } else {
+    // Create new private Gist
+    const res = await fetch(`${GITHUB_API}/gists`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to create Gist: ${res.status} ${res.statusText}`);
+    }
+
+    const created = await res.json();
+    return created.id as string;
+  }
+}
