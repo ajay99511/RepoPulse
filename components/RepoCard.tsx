@@ -1,130 +1,237 @@
 "use client";
 
 import { useState } from "react";
-import type { Repo } from "@/types";
-import LocalPathPopover from "./LocalPathPopover";
+import { formatDistanceToNow } from "date-fns";
+import {
+  GitFork,
+  Star,
+  Copy,
+  Check,
+  Code2,
+  ExternalLink,
+} from "lucide-react";
+import type { Repo, Space } from "@/types";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import RepoSpaceDropdown from "./RepoSpaceDropdown";
 
 interface RepoCardProps {
   repo: Repo;
   localPath: string | undefined;
+  spaces: Space[];
+  showSpaceLabels: boolean;
   onLinkPath: (repoId: string, path: string) => void;
   onClearPath: (repoId: string) => void;
-  onAddToGroup: (repoId: string, groupId: string) => void;
+  onToggleSpace: (repoId: string, spaceId: string) => void;
 }
 
-export function formatRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffSec = Math.floor(diffMs / 1000);
-
-  if (diffSec < 60) return `${diffSec} second${diffSec !== 1 ? "s" : ""} ago`;
-
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? "s" : ""} ago`;
-
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} hour${diffHr !== 1 ? "s" : ""} ago`;
-
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 30) return `${diffDay} day${diffDay !== 1 ? "s" : ""} ago`;
-
-  const diffMonth = Math.floor(diffDay / 30);
-  if (diffMonth < 12) return `${diffMonth} month${diffMonth !== 1 ? "s" : ""} ago`;
-
-  const diffYear = Math.floor(diffMonth / 12);
-  return `${diffYear} year${diffYear !== 1 ? "s" : ""} ago`;
+function getLanguageColor(lang: string): string {
+  switch (lang.toLowerCase()) {
+    case "typescript":
+      return "border-blue-500/50 text-blue-400";
+    case "javascript":
+      return "border-yellow-500/50 text-yellow-400";
+    case "react":
+      return "border-cyan-500/50 text-cyan-400";
+    case "rust":
+      return "border-orange-500/50 text-orange-400";
+    case "python":
+      return "border-green-500/50 text-green-400";
+    case "go":
+      return "border-sky-500/50 text-sky-400";
+    case "java":
+      return "border-red-500/50 text-red-400";
+    case "ruby":
+      return "border-rose-500/50 text-rose-400";
+    case "swift":
+      return "border-orange-400/50 text-orange-300";
+    case "kotlin":
+      return "border-purple-500/50 text-purple-400";
+    case "c++":
+    case "cpp":
+      return "border-pink-500/50 text-pink-400";
+    case "c#":
+    case "csharp":
+      return "border-violet-500/50 text-violet-400";
+    case "html":
+      return "border-orange-600/50 text-orange-500";
+    case "css":
+      return "border-blue-400/50 text-blue-300";
+    case "shell":
+    case "bash":
+      return "border-lime-500/50 text-lime-400";
+    case "dart":
+      return "border-teal-500/50 text-teal-400";
+    default:
+      return "border-gray-500/50 text-gray-400";
+  }
 }
 
-function truncate(text: string | null, max: number): string {
-  if (!text) return "";
-  return text.length <= max ? text : text.slice(0, max) + "…";
+function isRecentlyActive(dateString: string): boolean {
+  const diffDays = Math.ceil(
+    Math.abs(Date.now() - new Date(dateString).getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+  return diffDays <= 7;
 }
 
 export default function RepoCard({
   repo,
   localPath,
-  onLinkPath,
-  onClearPath,
-  onAddToGroup: _onAddToGroup,
+  spaces,
+  showSpaceLabels,
+  onLinkPath: _onLinkPath,
+  onClearPath: _onClearPath,
+  onToggleSpace,
 }: RepoCardProps) {
-  const [showPopover, setShowPopover] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const active = isRecentlyActive(repo.pushedAt);
+  const langStyle = repo.language ? getLanguageColor(repo.language) : "";
+  const isCopied = copiedId === repo.id;
+
+  function handleCopyClone() {
+    navigator.clipboard.writeText(`${repo.url}.git`);
+    setCopiedId(repo.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  const repoSpaces = spaces.filter((s) => s.repoIds.includes(repo.id));
 
   return (
-    <div
+    <Card
       id={`repo-${repo.id}`}
-      className="flex flex-col gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4"
+      className={`h-full flex flex-col group border-border/50 hover:border-primary/40 transition-all duration-300 ${
+        repo.isFork ? "opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100" : ""
+      }`}
     >
-      {/* Name */}
-      <a
-        href={repo.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="truncate text-sm font-semibold text-blue-400 hover:underline"
-      >
-        {repo.name}
-      </a>
-
-      {/* Description */}
-      {repo.description && (
-        <p className="text-xs leading-relaxed text-gray-400">
-          {truncate(repo.description, 120)}
-        </p>
-      )}
-
-      {/* Language */}
-      {repo.language && (
-        <div className="flex items-center gap-1.5">
-          <span
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: repo.languageColor ?? "#8b949e" }}
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 group-hover:text-amber-400 transition-colors">
+              {repo.isFork && (
+                <GitFork className="w-4 h-4 text-muted-foreground opacity-60 shrink-0" />
+              )}
+              <CardTitle className="text-lg font-bold truncate">
+                <a
+                  href={repo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  {repo.name}
+                </a>
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+              {active && (
+                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse-dot ring-2 ring-green-500/20" />
+              )}
+              <span>
+                {formatDistanceToNow(new Date(repo.pushedAt), {
+                  addSuffix: true,
+                })}
+              </span>
+            </div>
+          </div>
+          <RepoSpaceDropdown
+            repoId={repo.id}
+            spaces={spaces}
+            onToggle={onToggleSpace}
           />
-          <span className="text-xs text-gray-300">{repo.language}</span>
         </div>
-      )}
+      </CardHeader>
 
-      {/* Stats row */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
-        <span title="Stars">⭐ {repo.starCount.toLocaleString()}</span>
-        <span title="Forks">🍴 {repo.forkCount.toLocaleString()}</span>
-        <span title="Open issues">🔴 {repo.openIssueCount.toLocaleString()}</span>
-        <span className="ml-auto">{formatRelativeTime(repo.pushedAt)}</span>
-      </div>
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground/80 leading-relaxed font-medium line-clamp-2">
+          {repo.description ||
+            "Experimental codebase without public documentation yet."}
+        </p>
+      </CardContent>
 
-      {/* Local path action */}
-      {localPath ? (
-        <a
-          href={`vscode://file/${localPath}`}
-          className="mt-1 inline-flex items-center justify-center rounded-md bg-blue-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
-        >
-          Open in VS Code
-        </a>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setShowPopover((v) => !v)}
-          className="mt-1 inline-flex items-center justify-center rounded-md border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-500 hover:text-gray-200"
-        >
-          Link local path
-        </button>
-      )}
+      <CardFooter className="pt-4 flex flex-col gap-4">
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {repo.language && (
+              <Badge
+                variant="outline"
+                className={`rounded-md bg-muted/20 ${langStyle}`}
+              >
+                {repo.language}
+              </Badge>
+            )}
+            {repo.starCount > 0 && (
+              <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground bg-muted/20 px-2 py-1 rounded-md">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                {repo.starCount}
+              </div>
+            )}
+          </div>
 
-      {/* Inline popover */}
-      {showPopover && (
-        <LocalPathPopover
-          repoId={repo.id}
-          currentPath={localPath}
-          onLinkPath={(path) => {
-            onLinkPath(repo.id, path);
-            setShowPopover(false);
-          }}
-          onClearPath={() => {
-            onClearPath(repo.id);
-            setShowPopover(false);
-          }}
-          onClose={() => setShowPopover(false)}
-        />
-      )}
-    </div>
+          {/* Hover action buttons */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={handleCopyClone}
+              title="Copy Clone URL"
+            >
+              {isCopied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </Button>
+            {localPath && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                asChild
+                title="Open in VS Code"
+              >
+                <a href={`vscode://file/${localPath}`}>
+                  <Code2 className="w-4 h-4" />
+                </a>
+              </Button>
+            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              asChild
+              title="Open on GitHub"
+            >
+              <a href={repo.url} target="_blank" rel="noreferrer">
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </Button>
+          </div>
+        </div>
+
+        {/* Space labels */}
+        {showSpaceLabels && repoSpaces.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 border-t border-border pt-3 w-full">
+            {repoSpaces.map((s) => (
+              <Badge
+                key={s.id}
+                variant="secondary"
+                className="px-1.5 py-0 text-[9px] font-bold tracking-tight uppercase opacity-60"
+              >
+                {s.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardFooter>
+    </Card>
   );
 }

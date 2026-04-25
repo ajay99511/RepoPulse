@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 import type { Repo } from "@/types";
 import { searchRepos } from "@/lib/fuzzy";
 
@@ -63,32 +64,45 @@ export default function CommandPalette({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-lg rounded-xl border border-gray-700 bg-gray-900 shadow-2xl"
+        className="relative w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search repositories…"
-          className="w-full rounded-t-xl border-b border-gray-700 bg-transparent px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none"
-        />
+        <div className="flex items-center border-b border-border px-4">
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search repositories…"
+            className="w-full bg-transparent px-3 py-3 text-sm placeholder-muted-foreground focus:outline-none"
+          />
+        </div>
 
         <ul className="max-h-72 overflow-y-auto py-1">
           {results.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-gray-500">No results found.</li>
+            <li className="px-4 py-3 text-sm text-muted-foreground">
+              No results found.
+            </li>
           ) : (
             results.map((repo) => (
               <li key={repo.id}>
                 <button
                   type="button"
                   onClick={() => handleSelect(repo.id)}
-                  className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+                  className="w-full px-4 py-2.5 text-left text-sm hover:bg-accent focus:bg-accent focus:outline-none flex items-center gap-3"
                 >
+                  {repo.language && (
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: repo.languageColor ?? "#8b949e",
+                      }}
+                    />
+                  )}
                   <span className="font-medium">{repo.name}</span>
                   {repo.description && (
-                    <span className="ml-2 text-xs text-gray-500 truncate">
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[200px]">
                       {repo.description}
                     </span>
                   )}
@@ -98,8 +112,12 @@ export default function CommandPalette({
           )}
         </ul>
 
-        <div className="border-t border-gray-800 px-4 py-2 text-xs text-gray-600">
-          Press <kbd className="rounded bg-gray-800 px-1">Esc</kbd> to close
+        <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground flex items-center gap-2">
+          Press{" "}
+          <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+            Esc
+          </kbd>{" "}
+          to close
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ export default function GistSyncToggle() {
   const gistSyncEnabled = useRepoPulseStore((s) => s.gistSyncEnabled);
   const gistId = useRepoPulseStore((s) => s.gistId);
   const localPaths = useRepoPulseStore((s) => s.localPaths);
-  const customGroups = useRepoPulseStore((s) => s.customGroups);
+  const customSpaces = useRepoPulseStore((s) => s.customSpaces);
   const hideForks = useRepoPulseStore((s) => s.hideForks);
   const sortOption = useRepoPulseStore((s) => s.sortOption);
   const enableGistSync = useRepoPulseStore((s) => s.enableGistSync);
@@ -36,10 +36,10 @@ export default function GistSyncToggle() {
         const res = await fetch(`/api/gist${params}`);
         if (res.ok) {
           const remote: GistConfig = await res.json();
-          // Merge: remote customGroups take precedence
+          // Merge: remote customSpaces take precedence
           skipNextSync.current = true;
           useRepoPulseStore.setState({
-            customGroups: remote.customGroups,
+            customSpaces: remote.customSpaces,
             localPaths: remote.localPaths,
             hideForks: remote.hideForks,
             sortOption: remote.sortOption,
@@ -66,7 +66,12 @@ export default function GistSyncToggle() {
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 
     syncTimeoutRef.current = setTimeout(async () => {
-      const config: GistConfig = { localPaths, customGroups, hideForks, sortOption };
+      const config: GistConfig = {
+        localPaths,
+        customSpaces,
+        hideForks,
+        sortOption,
+      };
       try {
         const res = await fetch("/api/gist", {
           method: "POST",
@@ -89,8 +94,8 @@ export default function GistSyncToggle() {
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gistSyncEnabled, localPaths, customGroups, hideForks, sortOption]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gistSyncEnabled, localPaths, customSpaces, hideForks, sortOption]);
 
   return (
     <div className="relative">
@@ -99,9 +104,11 @@ export default function GistSyncToggle() {
           type="checkbox"
           checked={gistSyncEnabled}
           onChange={(e) => handleToggle(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-600 bg-gray-800 accent-blue-500"
+          className="h-4 w-4 rounded border-border bg-muted accent-primary"
         />
-        <span className="text-xs text-gray-400 whitespace-nowrap">Gist Sync</span>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          Gist Sync
+        </span>
       </label>
 
       {/* Non-blocking toast */}

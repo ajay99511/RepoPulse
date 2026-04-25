@@ -1,25 +1,29 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import type { Repo } from "@/types";
+import type { Repo, Space } from "@/types";
 import RepoCard from "./RepoCard";
 import EmptyState from "./EmptyState";
 
 interface BentoGridProps {
   repos: Repo[];
   localPaths: Record<string, string>;
+  spaces: Space[];
+  showSpaceLabels: boolean;
   onLinkPath: (repoId: string, path: string) => void;
   onClearPath: (repoId: string) => void;
-  onAddToGroup: (repoId: string, groupId: string) => void;
+  onToggleSpace: (repoId: string, spaceId: string) => void;
   emptyMessage?: string;
 }
 
 export default function BentoGrid({
   repos,
   localPaths,
+  spaces,
+  showSpaceLabels,
   onLinkPath,
   onClearPath,
-  onAddToGroup,
+  onToggleSpace,
   emptyMessage = "No repositories to display.",
 }: BentoGridProps) {
   if (repos.length === 0) {
@@ -27,33 +31,32 @@ export default function BentoGrid({
   }
 
   return (
-    <div
-      className="grid gap-4"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}
+    <motion.div
+      layout
+      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"
     >
       <AnimatePresence mode="popLayout">
         {repos.map((repo) => (
           <motion.div
+            layout
             key={repo.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              enter: { duration: 0.2 },
-              exit: { duration: 0.15 },
-              duration: 0.2,
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <RepoCard
               repo={repo}
               localPath={localPaths[repo.id]}
+              spaces={spaces}
+              showSpaceLabels={showSpaceLabels}
               onLinkPath={onLinkPath}
               onClearPath={onClearPath}
-              onAddToGroup={onAddToGroup}
+              onToggleSpace={onToggleSpace}
             />
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

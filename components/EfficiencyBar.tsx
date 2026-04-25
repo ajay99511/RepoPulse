@@ -1,7 +1,10 @@
 "use client";
 
+import { Search, ArrowUpDown } from "lucide-react";
 import type { SortOption } from "@/types";
 import { useRepoPulseStore } from "@/lib/store";
+import { Switch } from "./ui/switch";
+import { Input } from "./ui/input";
 
 interface EfficiencyBarProps {
   query: string;
@@ -9,55 +12,66 @@ interface EfficiencyBarProps {
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "lastUpdated", label: "Last Updated" },
-  { value: "mostStars", label: "Most Stars" },
-  { value: "mostForks", label: "Most Forks" },
-  { value: "nameAZ", label: "Name (A–Z)" },
+  { value: "lastUpdated", label: "Latest Activity" },
+  { value: "mostStars", label: "Most Starred" },
+  { value: "nameAZ", label: "Name A-Z" },
+  { value: "mostForks", label: "Most Forked" },
 ];
 
-export default function EfficiencyBar({ query, onQueryChange }: EfficiencyBarProps) {
+export default function EfficiencyBar({
+  query,
+  onQueryChange,
+}: EfficiencyBarProps) {
   const sortOption = useRepoPulseStore((s) => s.sortOption);
   const hideForks = useRepoPulseStore((s) => s.hideForks);
   const setSortOption = useRepoPulseStore((s) => s.setSortOption);
   const setHideForks = useRepoPulseStore((s) => s.setHideForks);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3">
+    <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl -mx-4 px-4 py-2 flex flex-col sm:flex-row gap-4">
       {/* Search */}
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Search repositories…"
-        className="flex-1 min-w-[180px] rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-      />
-
-      {/* Sort By */}
-      <div className="flex items-center gap-2">
-        <label className="text-xs text-gray-400 whitespace-nowrap">Sort by</label>
-        <select
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value as SortOption)}
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-gray-100 focus:border-blue-500 focus:outline-none"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+      <div className="relative group flex-grow max-w-2xl">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+        <Input
+          id="search-repos"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Fuzzy search repos, languages, or notes..."
+          className="pl-11 h-12 bg-card/50 rounded-xl border-border"
+        />
       </div>
 
-      {/* Hide Forks toggle */}
-      <label className="flex items-center gap-2 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={hideForks}
-          onChange={(e) => setHideForks(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-600 bg-gray-800 accent-blue-500"
-        />
-        <span className="text-xs text-gray-400 whitespace-nowrap">Hide Forks</span>
-      </label>
+      {/* Controls */}
+      <div className="flex items-center gap-3">
+        {/* Sort Dropdown */}
+        <div className="relative h-12 border bg-card/50 rounded-xl px-3 flex items-center gap-2">
+          <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+          <select
+            id="sort-select"
+            className="bg-transparent text-sm font-medium focus:outline-none pr-4 outline-none appearance-none cursor-pointer"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as SortOption)}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Hide Forks Toggle */}
+        <div className="h-12 border bg-card/50 rounded-xl px-4 flex items-center gap-3">
+          <Switch
+            id="hide-forks-toggle"
+            checked={hideForks}
+            onCheckedChange={setHideForks}
+          />
+          <span className="text-xs font-semibold select-none whitespace-nowrap">
+            Hide Forks
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

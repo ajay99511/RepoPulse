@@ -2,9 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { fetchUserProfile, fetchAllRepositories } from "@/lib/github";
-import SignOutButton from "@/components/SignOutButton";
 import DashboardClient from "@/components/DashboardClient";
-import GistSyncToggle from "@/components/GistSyncToggle";
 import type { UserProfile, Repo } from "@/types";
 
 export default async function DashboardPage() {
@@ -31,21 +29,10 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">RepoPulse</h1>
-        <div className="flex items-center gap-4">
-          <GistSyncToggle />
-          <SignOutButton />
-        </div>
-      </header>
-
-      <DashboardClient
-        repos={repos}
-        profile={profile}
-        profileError={profileError ?? undefined}
-      />
-    </div>
+    <DashboardClient
+      repos={repos}
+      profile={profile}
+      profileError={profileError ?? undefined}
+    />
   );
 }

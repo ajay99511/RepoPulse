@@ -11,6 +11,10 @@ function authHeaders(token: string) {
   };
 }
 
+/**
+ * Read a GistConfig from a GitHub Gist.
+ * Handles legacy configs that used `customGroups` instead of `customSpaces`.
+ */
 export async function readGistConfig(
   token: string,
   gistId: string
@@ -30,7 +34,22 @@ export async function readGistConfig(
     throw new Error(`Gist does not contain ${GIST_FILENAME}`);
   }
 
-  return JSON.parse(file.content) as GistConfig;
+  const raw = JSON.parse(file.content);
+
+  // Migrate legacy `customGroups` → `customSpaces`
+  if (raw.customGroups && !raw.customSpaces) {
+    raw.customSpaces = raw.customGroups.map(
+      (g: { id: string; name: string; repoIds: string[] }) => ({
+        id: g.id,
+        name: g.name,
+        description: "",
+        repoIds: g.repoIds,
+      })
+    );
+    delete raw.customGroups;
+  }
+
+  return raw as GistConfig;
 }
 
 export async function writeGistConfig(

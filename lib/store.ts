@@ -3,15 +3,34 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
-import type { Group, RepoPulseStore, SortOption } from "@/types";
+import type { Space, RepoPulseStore, SortOption } from "@/types";
+
+// Migration types for legacy data
+interface LegacyGroup {
+  id: string;
+  name: string;
+  repoIds: string[];
+}
+
+interface LegacyStoreState {
+  customGroups?: LegacyGroup[];
+  activeGroupId?: string | null;
+  customSpaces?: Space[];
+  activeSpaceId?: string | null;
+  localPaths?: Record<string, string>;
+  sortOption?: SortOption;
+  hideForks?: boolean;
+  gistSyncEnabled?: boolean;
+  gistId?: string | null;
+}
 
 export const useRepoPulseStore = create<RepoPulseStore>()(
   persist(
     (set, get) => ({
       // State
       localPaths: {},
-      customGroups: [],
-      activeGroupId: null,
+      customSpaces: [],
+      activeSpaceId: null,
       sortOption: "lastUpdated" as SortOption,
       hideForks: false,
       gistSyncEnabled: false,
@@ -29,40 +48,59 @@ export const useRepoPulseStore = create<RepoPulseStore>()(
           return { localPaths: rest };
         }),
 
-      createGroup: (name: string) => {
-        const existing = get().customGroups.find((g) => g.name === name);
+      createSpace: (name: string, description?: string) => {
+        const existing = get().customSpaces.find((s) => s.name === name);
         if (existing) return;
-        const newGroup: Group = { id: uuidv4(), name, repoIds: [] };
-        set((state) => ({ customGroups: [...state.customGroups, newGroup] }));
+        const newSpace: Space = {
+          id: uuidv4(),
+          name,
+          description: description ?? "",
+          repoIds: [],
+        };
+        set((state) => ({ customSpaces: [...state.customSpaces, newSpace] }));
       },
 
-      deleteGroup: (groupId: string) =>
+      deleteSpace: (spaceId: string) =>
         set((state) => ({
-          customGroups: state.customGroups.filter((g) => g.id !== groupId),
-          activeGroupId:
-            state.activeGroupId === groupId ? null : state.activeGroupId,
+          customSpaces: state.customSpaces.filter((s) => s.id !== spaceId),
+          activeSpaceId:
+            state.activeSpaceId === spaceId ? null : state.activeSpaceId,
         })),
 
-      addRepoToGroup: (repoId: string, groupId: string) =>
+      renameSpace: (spaceId: string, newName: string) =>
         set((state) => ({
-          customGroups: state.customGroups.map((g) =>
-            g.id === groupId && !g.repoIds.includes(repoId)
-              ? { ...g, repoIds: [...g.repoIds, repoId] }
-              : g
+          customSpaces: state.customSpaces.map((s) =>
+            s.id === spaceId ? { ...s, name: newName } : s
           ),
         })),
 
-      removeRepoFromGroup: (repoId: string, groupId: string) =>
+      updateSpaceDescription: (spaceId: string, description: string) =>
         set((state) => ({
-          customGroups: state.customGroups.map((g) =>
-            g.id === groupId
-              ? { ...g, repoIds: g.repoIds.filter((id) => id !== repoId) }
-              : g
+          customSpaces: state.customSpaces.map((s) =>
+            s.id === spaceId ? { ...s, description } : s
           ),
         })),
 
-      setActiveGroup: (groupId: string | null) =>
-        set({ activeGroupId: groupId }),
+      addRepoToSpace: (repoId: string, spaceId: string) =>
+        set((state) => ({
+          customSpaces: state.customSpaces.map((s) =>
+            s.id === spaceId && !s.repoIds.includes(repoId)
+              ? { ...s, repoIds: [...s.repoIds, repoId] }
+              : s
+          ),
+        })),
+
+      removeRepoFromSpace: (repoId: string, spaceId: string) =>
+        set((state) => ({
+          customSpaces: state.customSpaces.map((s) =>
+            s.id === spaceId
+              ? { ...s, repoIds: s.repoIds.filter((id) => id !== repoId) }
+              : s
+          ),
+        })),
+
+      setActiveSpace: (spaceId: string | null) =>
+        set({ activeSpaceId: spaceId }),
 
       setSortOption: (option: SortOption) => set({ sortOption: option }),
 
@@ -75,15 +113,41 @@ export const useRepoPulseStore = create<RepoPulseStore>()(
     }),
     {
       name: "repo-pulse-store",
+      version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         localPaths: state.localPaths,
-        customGroups: state.customGroups,
+        customSpaces: state.customSpaces,
+        activeSpaceId: state.activeSpaceId,
         sortOption: state.sortOption,
         hideForks: state.hideForks,
         gistSyncEnabled: state.gistSyncEnabled,
         gistId: state.gistId,
       }),
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as LegacyStoreState;
+
+        if (version === 0) {
+          // Migrate Groups → Spaces
+          const legacyGroups = state.customGroups ?? [];
+          const migratedSpaces: Space[] = legacyGroups.map((g) => ({
+            id: g.id,
+            name: g.name,
+            description: "",
+            repoIds: g.repoIds,
+          }));
+
+          return {
+            ...state,
+            customSpaces: state.customSpaces ?? migratedSpaces,
+            activeSpaceId: state.activeSpaceId ?? state.activeGroupId ?? null,
+            // Remove legacy keys
+            customGroups: undefined,
+            activeGroupId: undefined,
+          };
+        }
+        return state;
+      },
     }
   )
 );
