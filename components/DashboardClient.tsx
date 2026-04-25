@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Repo, UserProfile } from "@/types";
 import { useRepoPulseStore } from "@/lib/store";
 import { searchRepos } from "@/lib/fuzzy";
@@ -25,6 +25,9 @@ export default function DashboardClient({
 }: DashboardClientProps) {
   const [query, setQuery] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => setHasMounted(true), []);
 
   const localPaths = useRepoPulseStore((s) => s.localPaths);
   const customGroups = useRepoPulseStore((s) => s.customGroups);
@@ -50,6 +53,10 @@ export default function DashboardClient({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Use defaults during SSR to prevent Zustand hydration mismatch
+  const effectiveSortOption = hasMounted ? sortOption : "lastUpdated";
+  const effectiveHideForks = hasMounted ? hideForks : false;
+
   // Apply transformations in sequence
   const activeGroup = activeGroupId
     ? customGroups.find((g) => g.id === activeGroupId) ?? null
@@ -64,13 +71,13 @@ export default function DashboardClient({
   filtered = searchRepos(filtered, query);
 
   // 3. Sort
-  filtered = sortRepos(filtered, sortOption);
+  filtered = sortRepos(filtered, effectiveSortOption);
 
   // Pre-fork-filter list (used for empty state detection)
   const preForksFiltered = filtered;
 
   // 4. Hide forks
-  filtered = filterForks(filtered, hideForks);
+  filtered = filterForks(filtered, effectiveHideForks);
 
   // Determine empty state message
   function getEmptyMessage(): string {
@@ -83,7 +90,7 @@ export default function DashboardClient({
     if (query && filtered.length === 0) {
       return "No repositories match your search.";
     }
-    if (hideForks && preForksFiltered.length > 0 && preForksFiltered.every((r) => r.isFork)) {
+    if (effectiveHideForks && preForksFiltered.length > 0 && preForksFiltered.every((r) => r.isFork)) {
       return "All repositories are hidden. Disable 'Hide Forks' to see them.";
     }
     return "No repositories to display.";
@@ -93,8 +100,8 @@ export default function DashboardClient({
     <>
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Profile + Stats */}
-        {profile ? (
-          <ProfileHeader profile={profile} error={profileError} />
+        {profile && !profileError ? (
+          <ProfileHeader profile={profile} />
         ) : (
           <ProfileHeader
             profile={{ avatarUrl: "", name: null, login: "", bio: null, publicRepoCount: 0, followerCount: 0, followingCount: 0, totalStars: 0 }}

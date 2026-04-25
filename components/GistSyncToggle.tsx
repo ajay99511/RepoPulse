@@ -16,6 +16,7 @@ export default function GistSyncToggle() {
 
   const [toast, setToast] = useState<string | null>(null);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextSync = useRef(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -36,6 +37,7 @@ export default function GistSyncToggle() {
         if (res.ok) {
           const remote: GistConfig = await res.json();
           // Merge: remote customGroups take precedence
+          skipNextSync.current = true;
           useRepoPulseStore.setState({
             customGroups: remote.customGroups,
             localPaths: remote.localPaths,
@@ -54,6 +56,12 @@ export default function GistSyncToggle() {
   // Sync on store changes when enabled
   useEffect(() => {
     if (!gistSyncEnabled) return;
+
+    // Skip the sync triggered by remote merge to avoid write-after-read loop
+    if (skipNextSync.current) {
+      skipNextSync.current = false;
+      return;
+    }
 
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 

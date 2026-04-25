@@ -1,10 +1,18 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
 import SignInButton from "@/components/SignInButton";
 
 interface HomeProps {
   searchParams: { error?: string };
 }
 
-export default function Home({ searchParams }: HomeProps) {
+export default async function Home({ searchParams }: HomeProps) {
+  const session = await getServerSession(authOptions);
+  if (session) {
+    redirect("/dashboard");
+  }
+
   const hasError = Boolean(searchParams.error);
 
   return (

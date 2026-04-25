@@ -97,31 +97,33 @@ export async function fetchUserProfile(token: string): Promise<UserProfile> {
   };
 }
 
+interface GetRepositoriesResponse {
+  viewer: {
+    repositories: {
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      nodes: Array<{
+        id: string;
+        name: string;
+        nameWithOwner: string;
+        description: string | null;
+        primaryLanguage: { name: string; color: string } | null;
+        stargazerCount: number;
+        forkCount: number;
+        issues: { totalCount: number };
+        pushedAt: string;
+        isFork: boolean;
+        url: string;
+      }>;
+    };
+  };
+}
+
 export async function fetchAllRepositories(token: string): Promise<Repo[]> {
   const repos: Repo[] = [];
   let cursor: string | undefined = undefined;
 
   do {
-    const data = await graphql<{
-      viewer: {
-        repositories: {
-          pageInfo: { hasNextPage: boolean; endCursor: string | null };
-          nodes: Array<{
-            id: string;
-            name: string;
-            nameWithOwner: string;
-            description: string | null;
-            primaryLanguage: { name: string; color: string } | null;
-            stargazerCount: number;
-            forkCount: number;
-            issues: { totalCount: number };
-            pushedAt: string;
-            isFork: boolean;
-            url: string;
-          }>;
-        };
-      };
-    }>(token, GET_REPOSITORIES, { cursor });
+    const data: GetRepositoriesResponse = await graphql(token, GET_REPOSITORIES, { cursor });
 
     const { nodes, pageInfo } = data.viewer.repositories;
 

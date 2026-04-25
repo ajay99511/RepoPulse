@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 export default function SignInButton() {
   return (
     <button
-      onClick={() => signIn("github")}
+      onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
       className="flex items-center gap-3 rounded-lg bg-gray-900 px-6 py-3 text-white font-semibold hover:bg-gray-700 transition-colors"
     >
       <svg
