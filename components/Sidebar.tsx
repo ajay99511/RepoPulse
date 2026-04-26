@@ -216,7 +216,7 @@ export default function Sidebar({
   return (
     <>
       {/* Desktop sidebar — always visible on lg+ */}
-      <aside className="w-72 border-r border-border bg-card/30 hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto">
+      <aside className="w-72 shrink-0 border-r border-border bg-card/30 hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto">
         {sidebarContent}
       </aside>
 
