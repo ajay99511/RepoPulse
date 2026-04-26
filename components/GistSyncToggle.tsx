@@ -29,24 +29,28 @@ export default function GistSyncToggle() {
       return;
     }
 
-    // On enable: fetch remote config and merge
+    // On enable: fetch remote config and merge, using auto-discovery if needed
     try {
       const params = gistId ? `?gistId=${gistId}` : "";
-      if (gistId) {
-        const res = await fetch(`/api/gist${params}`);
-        if (res.ok) {
-          const remote: GistConfig = await res.json();
-          // Merge: remote customSpaces take precedence
-          skipNextSync.current = true;
-          useRepoPulseStore.setState({
-            customSpaces: remote.customSpaces,
-            localPaths: remote.localPaths,
-            hideForks: remote.hideForks,
-            sortOption: remote.sortOption,
-          });
-        }
+      const res = await fetch(`/api/gist${params}`);
+      
+      if (res.ok) {
+        const data: { config: GistConfig; gistId: string } = await res.json();
+        // Merge: remote takes precedence
+        skipNextSync.current = true;
+        useRepoPulseStore.setState({
+          customSpaces: data.config.customSpaces,
+          localPaths: data.config.localPaths,
+          hideForks: data.config.hideForks,
+          sortOption: data.config.sortOption,
+        });
+        enableGistSync(data.gistId);
+        showToast("Restored configuration from GitHub.");
+      } else {
+        // If 404 (Not Found), it means no existing Gist was discovered.
+        enableGistSync(gistId);
+        if (!gistId) showToast("Ready to sync to a new Gist.");
       }
-      enableGistSync(gistId);
     } catch {
       showToast("Gist sync unavailable. Operating with local data.");
       enableGistSync(gistId);

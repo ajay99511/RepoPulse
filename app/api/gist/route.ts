@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { readGistConfig, writeGistConfig } from "@/lib/gist";
+import { readGistConfig, writeGistConfig, findGistConfig } from "@/lib/gist";
 import type { GistConfig } from "@/types";
 
 export async function GET(req: NextRequest) {
@@ -12,15 +12,20 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const gistId = searchParams.get("gistId");
+  let gistId = searchParams.get("gistId");
 
   if (!gistId) {
-    return NextResponse.json({ error: "gistId is required" }, { status: 400 });
+    // Auto-discover existing gist
+    const foundId = await findGistConfig(session.accessToken);
+    if (!foundId) {
+      return NextResponse.json({ error: "No existing Gist configuration found" }, { status: 404 });
+    }
+    gistId = foundId;
   }
 
   try {
     const config = await readGistConfig(session.accessToken, gistId);
-    return NextResponse.json(config);
+    return NextResponse.json({ config, gistId });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to read Gist";
     return NextResponse.json({ error: message }, { status: 500 });

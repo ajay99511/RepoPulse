@@ -12,6 +12,25 @@ function authHeaders(token: string) {
 }
 
 /**
+ * Auto-discover the user's Gist containing the RepoPulse configuration.
+ * Returns the gistId if found, otherwise null.
+ */
+export async function findGistConfig(token: string): Promise<string | null> {
+  const res = await fetch(`${GITHUB_API}/gists`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const gists = await res.json();
+  const targetGist = gists.find((g: any) => g.files && g.files[GIST_FILENAME]);
+  
+  return targetGist ? targetGist.id : null;
+}
+
+/**
  * Read a GistConfig from a GitHub Gist.
  * Handles legacy configs that used `customGroups` instead of `customSpaces`.
  */
