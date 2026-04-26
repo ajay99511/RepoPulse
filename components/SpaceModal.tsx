@@ -83,7 +83,7 @@ export default function SpaceModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b flex items-center justify-between">
           <h2 className="text-xl font-bold">
             {isEditing ? "Edit Space" : "New Environment Space"}
           </h2>
@@ -93,7 +93,7 @@ export default function SpaceModal({
         </div>
 
         {/* Form */}
-        <div className="p-6 space-y-4" onKeyDown={handleKeyDown}>
+        <div className="p-4 sm:p-6 space-y-4" onKeyDown={handleKeyDown}>
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-70">
               Project Context Name
@@ -128,7 +128,7 @@ export default function SpaceModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-muted/20 border-t flex justify-end gap-3">
+        <div className="p-4 sm:p-6 bg-muted/20 border-t flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

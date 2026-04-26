@@ -1,6 +1,7 @@
 "use client";
 
-import { Activity, LayoutGrid, Box, FolderPlus, Plus, Pencil, Trash2 } from "lucide-react";
+import { useEffect } from "react";
+import { Activity, LayoutGrid, Box, FolderPlus, Plus, Pencil, Trash2, X } from "lucide-react";
 import type { Space, UserProfile } from "@/types";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -16,6 +17,9 @@ interface SidebarProps {
   onEditSpace: (space: Space) => void;
   onDeleteSpace: (spaceId: string) => void;
   onSignOut: () => void;
+  /** Mobile drawer state */
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export default function Sidebar({
@@ -28,28 +32,56 @@ export default function Sidebar({
   onEditSpace,
   onDeleteSpace,
   onSignOut,
+  isOpen = false,
+  onClose,
 }: SidebarProps) {
-  return (
-    <aside className="w-72 border-r border-border bg-card/30 hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto">
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isOpen]);
+
+  // Close sidebar on space selection for mobile
+  function handleSelectSpace(spaceId: string | null) {
+    onSelectSpace(spaceId);
+    onClose?.();
+  }
+
+  const sidebarContent = (
+    <>
       {/* Logo */}
       <div className="p-6">
-        <div className="flex items-center gap-3 px-2">
-          <Activity className="w-8 h-8 text-amber-500" />
-          <h1 className="text-xl font-bold tracking-tight">RepoPulse</h1>
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <Activity className="w-8 h-8 text-amber-500" />
+            <h1 className="text-xl font-bold tracking-tight">RepoPulse</h1>
+          </div>
+          {/* Close button — visible only on mobile drawer */}
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-accent transition-colors"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-grow px-3 space-y-1">
+      <nav className="flex-grow px-3 space-y-1 overflow-y-auto">
         {/* System Section */}
         <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-60">
           System
         </div>
         <button
           id="sidebar-all-projects"
-          onClick={() => onSelectSpace(null)}
+          onClick={() => handleSelectSpace(null)}
           className={cn(
-            "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
             activeSpaceId === null
               ? "bg-primary text-primary-foreground"
               : "hover:bg-accent"
@@ -85,9 +117,9 @@ export default function Sidebar({
           <div key={space.id} className="relative group">
             <button
               id={`sidebar-space-${space.id}`}
-              onClick={() => onSelectSpace(space.id)}
+              onClick={() => handleSelectSpace(space.id)}
               className={cn(
-                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 activeSpaceId === space.id
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-accent"
@@ -178,6 +210,36 @@ export default function Sidebar({
           </div>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar — always visible on lg+ */}
+      <aside className="w-72 border-r border-border bg-card/30 hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile/tablet drawer overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <aside
+            className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-card border-r border-border flex flex-col shadow-2xl animate-slide-in-left"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation sidebar"
+          >
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

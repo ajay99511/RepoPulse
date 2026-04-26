@@ -119,7 +119,7 @@ export default function RepoCard({
               {repo.isFork && (
                 <GitFork className="w-4 h-4 text-muted-foreground opacity-60 shrink-0" />
               )}
-              <CardTitle className="text-lg font-bold truncate">
+              <CardTitle className="text-base sm:text-lg font-bold truncate">
                 <a
                   href={repo.url}
                   target="_blank"
@@ -176,7 +176,7 @@ export default function RepoCard({
           </div>
 
           {/* Hover action buttons */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
+          <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity sm:translate-x-2 sm:group-hover:translate-x-0">
             <Button
               size="icon"
               variant="ghost"

@@ -28,27 +28,27 @@ export default function EfficiencyBar({
   const setHideForks = useRepoPulseStore((s) => s.setHideForks);
 
   return (
-    <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl -mx-4 px-4 py-2 flex flex-col sm:flex-row gap-4">
-      {/* Search */}
-      <div className="relative group flex-grow max-w-2xl">
+    <div className="sticky top-0 lg:top-0 z-10 bg-background/80 backdrop-blur-xl py-2 flex flex-col sm:flex-row gap-3 sm:gap-4">
+      {/* Search — full width on mobile */}
+      <div className="relative group flex-grow">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <Input
           id="search-repos"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Fuzzy search repos, languages, or notes..."
-          className="pl-11 h-12 bg-card/50 rounded-xl border-border"
+          className="pl-11 h-11 sm:h-12 bg-card/50 rounded-xl border-border text-sm"
         />
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center gap-3">
+      {/* Controls — wrap naturally */}
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Sort Dropdown */}
-        <div className="relative h-12 border bg-card/50 rounded-xl px-3 flex items-center gap-2">
-          <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+        <div className="relative h-11 sm:h-12 border bg-card/50 rounded-xl px-3 flex items-center gap-2 flex-1 sm:flex-none min-w-0">
+          <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
           <select
             id="sort-select"
-            className="bg-transparent text-sm font-medium focus:outline-none pr-4 outline-none appearance-none cursor-pointer"
+            className="bg-transparent text-sm font-medium focus:outline-none pr-4 outline-none appearance-none cursor-pointer min-w-0 w-full sm:w-auto"
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
           >
@@ -61,13 +61,13 @@ export default function EfficiencyBar({
         </div>
 
         {/* Hide Forks Toggle */}
-        <div className="h-12 border bg-card/50 rounded-xl px-4 flex items-center gap-3">
+        <div className="h-11 sm:h-12 border bg-card/50 rounded-xl px-3 sm:px-4 flex items-center gap-2 sm:gap-3 shrink-0">
           <Switch
             id="hide-forks-toggle"
             checked={hideForks}
             onCheckedChange={setHideForks}
           />
-          <span className="text-xs font-semibold select-none whitespace-nowrap">
+          <span className="text-xs font-semibold select-none whitespace-nowrap hidden xs:inline sm:inline">
             Hide Forks
           </span>
         </div>

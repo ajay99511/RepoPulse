@@ -24,7 +24,7 @@ export default function RepoSpaceDropdown({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
         >
           <MoreVertical className="w-4 h-4" />
         </Button>
@@ -33,7 +33,7 @@ export default function RepoSpaceDropdown({
         <DropdownPrimitive.Content
           align="end"
           sideOffset={4}
-          className="z-50 min-w-[180px] overflow-hidden rounded-xl border bg-card p-1 shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          className="z-50 min-w-[180px] overflow-hidden rounded-xl border bg-card p-1 shadow-xl animate-fade-in"
         >
           <div className="px-2 py-1.5 text-[10px] font-bold uppercase text-muted-foreground opacity-60">
             Assign to Space

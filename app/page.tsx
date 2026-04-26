@@ -24,8 +24,8 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
             <Activity className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">RepoPulse</h1>
-          <p className="max-w-sm text-muted-foreground">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">RepoPulse</h1>
+          <p className="max-w-sm text-sm sm:text-base text-muted-foreground">
             The Zero-Friction Dashboard for managing GitHub repositories.
             Browse, search, and organize all your repos in one place.
           </p>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
+import { Activity, Menu } from "lucide-react";
 import type { Repo, UserProfile, Space } from "@/types";
 import { useRepoPulseStore } from "@/lib/store";
 import { searchRepos } from "@/lib/fuzzy";
@@ -27,6 +28,7 @@ export default function DashboardClient({
   const [query, setQuery] = useState("");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Space modal state
   const [isSpaceModalOpen, setIsSpaceModalOpen] = useState(false);
@@ -172,62 +174,93 @@ export default function DashboardClient({
           onEditSpace={handleEditSpace}
           onDeleteSpace={handleDeleteSpace}
           onSignOut={() => signOut({ callbackUrl: "/" })}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         {/* Main Content */}
-        <main className="flex-grow flex flex-col p-6 md:p-8 lg:p-12 space-y-8 overflow-y-auto max-h-screen">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between items-start gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium uppercase tracking-widest opacity-60">
-                Dashboard /{" "}
-                {effectiveActiveSpaceId === null ? "All Projects" : "Space"}
-              </div>
-              <h2 className="text-4xl font-bold tracking-tighter">
-                {effectiveActiveSpaceId === null
-                  ? "Repo Command Center"
-                  : activeSpace?.name ?? "Space"}
-              </h2>
-              <p className="text-muted-foreground max-w-2xl">
-                {effectiveActiveSpaceId === null
-                  ? "Unified view of all your codebases across platforms."
-                  : activeSpace?.description ||
-                    "Manage select repositories for this context."}
-              </p>
+        <main className="flex-grow flex flex-col min-w-0 overflow-y-auto">
+          {/* Mobile Header — visible below lg */}
+          <div className="sticky top-0 z-30 flex items-center justify-between bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 lg:hidden">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
+              aria-label="Open navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-amber-500" />
+              <span className="font-bold text-sm tracking-tight">RepoPulse</span>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 shrink-0">
-              <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1 min-w-[120px] shadow-sm">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">
-                  Active Focus
-                </span>
-                <span className="text-2xl font-bold">{stats.total}</span>
-              </div>
-              <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1 min-w-[120px] shadow-sm">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">
-                  Collective Stars
-                </span>
-                <span className="text-2xl font-bold text-yellow-500">
-                  {stats.stars}
-                </span>
-              </div>
-            </div>
+            {profile ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatarUrl}
+                alt={profile.login}
+                className="w-8 h-8 rounded-full border border-primary/20"
+                onClick={() => setSidebarOpen(true)}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+            )}
           </div>
 
-          {/* Filter Bar */}
-          <EfficiencyBar query={query} onQueryChange={setQuery} />
+          {/* Page content */}
+          <div className="flex flex-col p-4 sm:p-6 lg:p-8 xl:p-12 space-y-6 sm:space-y-8">
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between items-start gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground font-medium uppercase tracking-widest opacity-60">
+                  Dashboard /{" "}
+                  {effectiveActiveSpaceId === null ? "All Projects" : "Space"}
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter">
+                  {effectiveActiveSpaceId === null
+                    ? "Repo Command Center"
+                    : activeSpace?.name ?? "Space"}
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+                  {effectiveActiveSpaceId === null
+                    ? "Unified view of all your codebases across platforms."
+                    : activeSpace?.description ||
+                      "Manage select repositories for this context."}
+                </p>
+              </div>
 
-          {/* Repo Grid */}
-          <BentoGrid
-            repos={filtered}
-            localPaths={localPaths}
-            spaces={effectiveSpaces}
-            showSpaceLabels={effectiveActiveSpaceId === null}
-            onLinkPath={setLocalPath}
-            onClearPath={clearLocalPath}
-            onToggleSpace={handleToggleSpace}
-            emptyMessage={getEmptyMessage()}
-          />
+              <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                <div className="bg-card border rounded-2xl p-3 sm:p-4 flex flex-col gap-1 sm:min-w-[120px] shadow-sm">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">
+                    Active Focus
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold">{stats.total}</span>
+                </div>
+                <div className="bg-card border rounded-2xl p-3 sm:p-4 flex flex-col gap-1 sm:min-w-[120px] shadow-sm">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">
+                    Collective Stars
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-yellow-500">
+                    {stats.stars}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <EfficiencyBar query={query} onQueryChange={setQuery} />
+
+            {/* Repo Grid */}
+            <BentoGrid
+              repos={filtered}
+              localPaths={localPaths}
+              spaces={effectiveSpaces}
+              showSpaceLabels={effectiveActiveSpaceId === null}
+              onLinkPath={setLocalPath}
+              onClearPath={clearLocalPath}
+              onToggleSpace={handleToggleSpace}
+              emptyMessage={getEmptyMessage()}
+            />
+          </div>
         </main>
       </div>
 

@@ -9,12 +9,12 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({ profile, error, onRetry }: ProfileHeaderProps) {
   if (error) {
     return (
-      <div className="flex items-center gap-4 rounded-lg bg-red-900/30 border border-red-700 px-4 py-3">
-        <p className="text-red-300 text-sm flex-1">{error}</p>
+      <div className="flex items-center gap-4 rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-3">
+        <p className="text-destructive-foreground text-sm flex-1">{error}</p>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="text-sm text-red-400 underline hover:text-red-300"
+            className="text-sm text-destructive-foreground underline hover:opacity-80 transition-opacity"
           >
             Retry
           </button>
@@ -34,12 +34,12 @@ export default function ProfileHeader({ profile, error, onRetry }: ProfileHeader
         className="rounded-full"
       />
       <div>
-        <p className="font-semibold text-lg text-white">
+        <p className="font-semibold text-lg text-foreground">
           {profile.name ?? profile.login}
         </p>
-        <p className="text-gray-400 text-sm">@{profile.login}</p>
+        <p className="text-muted-foreground text-sm">@{profile.login}</p>
         {profile.bio && (
-          <p className="text-gray-300 text-sm mt-1">{profile.bio}</p>
+          <p className="text-muted-foreground/80 text-sm mt-1">{profile.bio}</p>
         )}
       </div>
     </section>

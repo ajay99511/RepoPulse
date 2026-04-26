@@ -56,7 +56,7 @@ export default function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -102,7 +102,7 @@ export default function CommandPalette({
                   )}
                   <span className="font-medium">{repo.name}</span>
                   {repo.description && (
-                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[200px]">
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-[200px]">
                       {repo.description}
                     </span>
                   )}
